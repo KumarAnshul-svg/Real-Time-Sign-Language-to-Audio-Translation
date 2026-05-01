@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASL Chat | Intelligent Interpreter</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- MediaPipe & ONNX Runtime -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+</head>
+<body class="chatgpt-theme">
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="new-chat">
+                <button id="reset-session" class="btn btn-outline full-width">
+                    <i data-lucide="plus"></i> New Translation
+                </button>
+            </div>
+            
+            <div class="history-list">
+                <div class="history-label">Recent History</div>
+                <div id="session-history">
+                    <!-- History items injected here -->
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="status-indicator">
+                    <div id="model-status" class="dot"></div>
+                    <span id="status-text">Connecting...</span>
+                </div>
+                <button id="help-trigger" class="btn btn-ghost">
+                    <i data-lucide="image"></i> Hand Signs Visual Guide
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="chat-container">
+            <div class="chat-header">
+                <div class="model-info">
+                    <span class="model-badge">ASL-v2.1</span>
+                    <span class="fps-text">FPS: <span id="fps-value">0</span></span>
+                </div>
+            </div>
+
+            <div class="chat-feed" id="chat-feed">
+                <!-- Video Feed Card -->
+                <div class="message system">
+                    <div class="video-card glass">
+                        <div class="video-container">
+                            <video id="input-video" playsinline style="display:none"></video>
+                            <canvas id="output-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transcription Message -->
+                <div class="message user">
+                    <div class="avatar">U</div>
+                    <div class="message-content">
+                        <div class="label">Transcription</div>
+                        <div id="sentence-output" class="text-content" contenteditable="true" placeholder="Waiting for hand signs..."></div>
+                        <div class="message-actions">
+                            <button id="correct-btn" class="action-btn" title="AI Refine">
+                                <i data-lucide="wand-2"></i>
+                            </button>
+                            <button id="speak-btn" class="action-btn" title="Speak">
+                                <i data-lucide="volume-2"></i>
+                            </button>
+                            <button id="copy-btn" class="action-btn" title="Copy">
+                                <i data-lucide="copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Control Area -->
+            <div class="input-area">
+                <div class="input-container">
+                    <div class="gesture-pill" id="gesture-hint">Position hand...</div>
+                    <div class="actions">
+                        <button id="clear-btn" class="btn btn-ghost" title="Clear Chat">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                        <button id="settings-trigger" class="btn btn-ghost" title="Settings">
+                            <i data-lucide="settings"></i>
+                        </button>
+                    </div>
+                </div>
+                <p class="disclaimer">ASL Pro uses on-device AI. Accuracy depends on lighting and camera angle.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Hand Guide Modal -->
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-card help-card">
+            <div class="modal-header">
+                <h2>Visual Hand Sign Chart</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body chart-body">
+                <img src="/assets/asl_chart.png" alt="ASL Alphabet Chart" class="full-chart">
+                <div class="special-signs">
+                    <h3>Special Controls</h3>
+                    <div class="guide-grid">
+                        <div class="guide-item">
+                            <div class="guide-char">SPACE</div>
+                            <div class="guide-desc">Flat hand (check model)</div>
+                        </div>
+                        <div class="guide-item">
+                            <div class="guide-char">DEL</div>
+                            <div class="guide-desc">Specific sign for delete</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>System Tuning</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-row">
+                    <label>Sensitivity (Threshold)</label>
+                    <input type="range" id="conf-threshold" min="0.5" max="0.99" step="0.01" value="0.70">
+                    <span id="conf-val">0.70</span>
+                </div>
+                <div class="setting-row">
+                    <label>Responsiveness (Smoothing)</label>
+                    <input type="number" id="smoothing-frames" value="6" min="1" max="20">
+                    <p class="small-hint">Lower = faster, Higher = more stable</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
